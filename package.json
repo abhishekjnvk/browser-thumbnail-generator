@@ -1,5 +1,5 @@
 {
-  "name": "quick-thumbnail",
+  "name": "browser-thumbnail-generator",
   "version": "1.0.0",
   "description": "A simple and efficient library for generating thumbnails from images and videos quickly",
   "main": "lib/index.js",
@@ -13,7 +13,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/abhishekjnvk/quick-thumbnail.git"
+    "url": "git+https://github.com/abhishekjnvk/browser-thumbnail-generator.git"
   },
   "keywords": [
     "thumbnail",
@@ -22,7 +22,10 @@
   ],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/abhishekjnvk/quick-thumbnail/issues"
+    "url": "https://github.com/abhishekjnvk/browser-thumbnail-generator/issues"
   },
-  "homepage": "https://github.com/abhishekjnvk/quick-thumbnail#readme"
+  "homepage": "https://github.com/abhishekjnvk/browser-thumbnail-generator#readme",
+  "dependencies": {
+    "browser-thumbnail-generator": "^1.0.0"
+  }
 }

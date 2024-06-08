@@ -1,6 +1,10 @@
-# quick-thumbnail
 
-quick-thumbnail is a simple and efficient library for generating thumbnails from images and videos quickly. It is designed to be easily integrated into your projects, providing fast and reliable thumbnail generation.
+[![npm](https://img.shields.io/npm/v/browser-thumbnail-generator.svg)](https://www.npmjs.com/package/browser-thumbnail-generator)
+[![npm](https://img.shields.io/npm/l/browser-thumbnail-generator.svg)](https://github.com/abhishekjnvk/browser-thumbnail-generator)
+
+# browser-thumbnail-generator
+
+browser-thumbnail-generator is a simple and efficient library for generating thumbnails from images and videos quickly. It is designed to be easily integrated into your projects, providing fast and reliable thumbnail generation.
 
 ## Features
 
@@ -10,18 +14,18 @@ quick-thumbnail is a simple and efficient library for generating thumbnails from
 
 ## Installation
 
-You can install quick-thumbnail via:
+You can install browser-thumbnail-generator via:
 
 - npm
 
 ```bash
-npm install quick-thumbnail
+npm install browser-thumbnail-generator
 ```
 
 - yarn
 
 ```bash
-yarn add quick-thumbnail
+yarn add browser-thumbnail-generator
 ```
 
 ## Usages
@@ -29,7 +33,7 @@ yarn add quick-thumbnail
 `generateMediaThumbnail()`
 
 ```js
-import generateMediaThumbnail from 'quick-thumbnail';
+import generateMediaThumbnail from 'browser-thumbnail-generator';
 
 let params = {
   file: imageFile, // image/video file
@@ -95,7 +99,7 @@ supported mime types:
 supported mime types for thumbnail generation can be imported using
 
 ```js
-import { supportedMimeTypes } from "quick-thumbnail";
+import { supportedMimeTypes } from "browser-thumbnail-generator";
 ```
 
 ## Contributing
