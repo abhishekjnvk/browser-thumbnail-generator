@@ -1,0 +1,28 @@
+{
+  "name": "quick-thumbnail",
+  "version": "1.0.0",
+  "description": "A simple and efficient library for generating thumbnails from images and videos quickly",
+  "main": "lib/index.js",
+  "directories": {
+    "example": "example",
+    "lib": "lib"
+  },
+  "author": "Abhishek Kumar <abhishekkumarjnvk@gmail.com>",
+  "contributors": [
+    "Abhishek Kumar <abhishekkumarjnvk@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhishekjnvk/quick-thumbnail.git"
+  },
+  "keywords": [
+    "thumbnail",
+    "video-thumbnail",
+    "image-thumbnail"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/abhishekjnvk/quick-thumbnail/issues"
+  },
+  "homepage": "https://github.com/abhishekjnvk/quick-thumbnail#readme"
+}
