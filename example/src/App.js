@@ -67,8 +67,11 @@ const App = () => {
 
   return (
     <div className="mt-2 text-center">
+    <h3 className="my-3">
+      select a video or image to generate thumbnail
+    </h3>
       <span className="ms-1">
-        Height:{" "}
+        Thumbnail Height:{" "}
         <input
           type="number"
           name="height"
@@ -79,7 +82,7 @@ const App = () => {
         />
       </span>
       <span className="ms-1">
-        Width:{" "}
+        Thumbnail width:{" "}
         <input
           type="number"
           name="width"
@@ -103,7 +106,7 @@ const App = () => {
       <br />
       <br />
       <span className="ms-1">
-        Timestamp:{" "}
+        Timestamp of thumbnail (in video):{" "}
         <input
           type="number"
           name="timestamp"
@@ -114,7 +117,7 @@ const App = () => {
         />
       </span>
       <span className="ms-1">
-        File:{" "}
+        Video or Image File:{" "}
         <input
           type="file"
           accept={supportedMimeTypes?.join(",")}
@@ -123,14 +126,14 @@ const App = () => {
         />
       </span>
       <div className="mt-2">
-        {thumbnail && <img src={thumbnail} alt="Video Thumbnail" />}
-        <br />
+        {thumbnail && <div className="border p-2"> <img src={thumbnail} alt="Video Thumbnail" /></div>}
         {thumbnailData ? (
           <div className="mt-2">
-            Thumbnail Data:
-            <pre>
-              <code>{JSON.stringify(thumbnailData, null, 2)}</code>{" "}
-            </pre>
+            Thumbnail Data: <br />
+            <b>Thumbnail size</b>: {thumbnailData.size}<br />
+            <b>Thumbnail height</b>: {thumbnailData.height}<br />
+            <b>Thumbnail width</b>: {thumbnailData.width}<br />
+            <b>Original file size</b>: {thumbnailData.original_size}<br />
           </div>
         ) : null}
       </div>
