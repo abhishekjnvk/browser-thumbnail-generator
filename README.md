@@ -6,6 +6,10 @@
 
 browser-thumbnail-generator is a simple and efficient library for generating thumbnails from images and videos quickly. It is designed to be easily integrated into your projects, providing fast and reliable thumbnail generation.
 
+[live preview](https://browser-thumbnail.netlify.app/)
+
+![alt text](./example/example.gif)
+
 ## Features
 
 - Generate thumbnails from images
