@@ -1,12 +1,13 @@
 {
   "name": "browser-thumbnail-generator",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple and efficient library for generating thumbnails from images and videos quickly",
   "main": "lib/index.js",
   "directories": {
     "example": "example",
     "lib": "lib"
   },
+  "type": "module", 
   "author": "Abhishek Kumar <abhishekkumarjnvk@gmail.com>",
   "contributors": [
     "Abhishek Kumar <abhishekkumarjnvk@gmail.com>"
@@ -24,8 +25,5 @@
   "bugs": {
     "url": "https://github.com/abhishekjnvk/browser-thumbnail-generator/issues"
   },
-  "homepage": "https://github.com/abhishekjnvk/browser-thumbnail-generator#readme",
-  "dependencies": {
-    "browser-thumbnail-generator": "^1.0.0"
-  }
+  "homepage": "https://github.com/abhishekjnvk/browser-thumbnail-generator#readme"
 }
