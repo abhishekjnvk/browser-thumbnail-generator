@@ -68,7 +68,7 @@ Input Parameters:
   height?: number;
   width?: number;
   maintainAspectRatio?: boolean;
-  timestamp?: number; //only in video
+  timestamp?: number; // for video files
 }
 ```
 
@@ -88,7 +88,9 @@ Promise<{
   height: number;
   size: number;
   original_size: number;
-  timestamp: number; // only in video
+  original_width: number,
+  original_height: number,
+  total_duration: number; // for video files
 }>
 ```
 
