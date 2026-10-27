@@ -4,7 +4,10 @@ export const supportedImageMimes: string[] = [
   "image/gif",
   "image/bmp",
   "image/webp",
+  "image/avif",
   "image/svg+xml",
+  "image/heic",
+  "image/heif",
 ];
 
 export const supportedVideoMimes: string[] = [
@@ -19,6 +22,7 @@ export const supportedVideoMimes: string[] = [
   "video/x-ms-asf",
   "video/avi",
   "video/x-ms-wmv",
+  "video/x-matroska",
 ];
 
 export const supportedMimeTypes: string[] = [

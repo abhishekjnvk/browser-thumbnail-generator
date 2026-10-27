@@ -9,6 +9,12 @@ export { supportedMimeTypes, supportedImageMimes, supportedVideoMimes } from "./
 const imageMimeSet = new Set(supportedImageMimes);
 const videoMimeSet = new Set(supportedVideoMimes);
 
+const validOutputFormats: ReadonlySet<string> = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
 /**
  * Generate a thumbnail from an image or video file.
  *
@@ -17,8 +23,8 @@ const videoMimeSet = new Set(supportedVideoMimes);
  *
  * @param options - Thumbnail generation options
  * @returns A promise resolving to the thumbnail result
- * @throws {TypeError} If the file is missing or not a valid File/Blob
- * @throws {Error} If the file type is not supported
+ * @throws {TypeError} If input validation fails
+ * @throws {Error} If the file type is not supported or processing fails
  */
 export async function generateMediaThumbnail(
   options: ThumbnailOptions,
@@ -49,22 +55,47 @@ export async function generateMediaThumbnail(
   }
 
   // --- Validate numeric options ---
-  const { width, height, timestamp, quality } = options;
+  const { width, height, maxWidth, maxHeight, timestamp, quality, maxFileSize } = options;
 
-  if (width !== undefined && (typeof width !== "number" || width < 0 || !Number.isFinite(width))) {
-    throw new TypeError("`width` must be a non-negative finite number.");
-  }
+  const validateNonNegativeNumber = (name: string, value: unknown): void => {
+    if (value !== undefined && (typeof value !== "number" || value < 0 || !Number.isFinite(value))) {
+      throw new TypeError(`\`${name}\` must be a non-negative finite number.`);
+    }
+  };
 
-  if (height !== undefined && (typeof height !== "number" || height < 0 || !Number.isFinite(height))) {
-    throw new TypeError("`height` must be a non-negative finite number.");
-  }
-
-  if (timestamp !== undefined && (typeof timestamp !== "number" || timestamp < 0 || !Number.isFinite(timestamp))) {
-    throw new TypeError("`timestamp` must be a non-negative finite number.");
-  }
+  validateNonNegativeNumber("width", width);
+  validateNonNegativeNumber("height", height);
+  validateNonNegativeNumber("maxWidth", maxWidth);
+  validateNonNegativeNumber("maxHeight", maxHeight);
+  validateNonNegativeNumber("timestamp", timestamp);
+  validateNonNegativeNumber("maxFileSize", maxFileSize);
 
   if (quality !== undefined && (typeof quality !== "number" || quality < 0 || quality > 1)) {
     throw new TypeError("`quality` must be a number between 0 and 1.");
+  }
+
+  // --- Validate enum-like options ---
+  const { outputFormat, maintainAspectRatio, crop } = options;
+
+  if (outputFormat !== undefined && !validOutputFormats.has(outputFormat)) {
+    throw new TypeError(
+      `\`outputFormat\` must be one of: ${[...validOutputFormats].join(", ")}. Received: "${outputFormat}".`,
+    );
+  }
+
+  if (maintainAspectRatio !== undefined && typeof maintainAspectRatio !== "boolean") {
+    throw new TypeError("`maintainAspectRatio` must be a boolean.");
+  }
+
+  if (crop !== undefined && typeof crop !== "boolean") {
+    throw new TypeError("`crop` must be a boolean.");
+  }
+
+  // --- Validate file size ---
+  if (maxFileSize !== undefined && maxFileSize > 0 && file.size > maxFileSize) {
+    throw new Error(
+      `File size (${file.size} bytes) exceeds the maximum allowed size (${maxFileSize} bytes).`,
+    );
   }
 
   // --- Route by MIME type ---

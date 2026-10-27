@@ -14,10 +14,22 @@ URL.revokeObjectURL = vi.fn((url: string) => {
   objectUrlMap.delete(url);
 });
 
-// --- Control flag for video error simulation ---
-let mockVideoShouldError = false;
-export function setMockVideoError(shouldError: boolean): void {
-  mockVideoShouldError = shouldError;
+// --- Control flag for media error simulation (images + videos) ---
+let mockMediaShouldError = false;
+export function setMockMediaError(shouldError: boolean): void {
+  mockMediaShouldError = shouldError;
+}
+
+// --- Control flags for video behavior ---
+let mockVideoSeekNeverCompletes = false;
+let mockVideoHasRequestFrameCallback = false;
+
+export function setMockVideoSeekNeverCompletes(value: boolean): void {
+  mockVideoSeekNeverCompletes = value;
+}
+
+export function setMockVideoRequestFrameCallback(value: boolean): void {
+  mockVideoHasRequestFrameCallback = value;
 }
 
 // --- Mock Canvas 2D Context ---
@@ -28,6 +40,10 @@ function createMockContext(): CanvasRenderingContext2D {
     putImageData: vi.fn(),
     fillRect: vi.fn(),
     clearRect: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    transform: vi.fn(),
+    fillStyle: "",
   } as unknown as CanvasRenderingContext2D;
 }
 
@@ -69,7 +85,7 @@ class MockImage {
   set src(value: string) {
     this._src = value;
     setTimeout(() => {
-      if (mockVideoShouldError) {
+      if (mockMediaShouldError) {
         this.onerror?.();
       } else {
         this.onload?.();
@@ -82,6 +98,43 @@ class MockImage {
   }
 }
 
+// --- Mock createImageBitmap ---
+interface MockImageBitmap {
+  width: number;
+  height: number;
+  close: () => void;
+}
+
+let mockImageBitmapEnabled = true;
+let mockImageBitmapWidth = 800;
+let mockImageBitmapHeight = 600;
+
+export function setMockImageBitmap(
+  enabled: boolean,
+  width = 800,
+  height = 600,
+): void {
+  mockImageBitmapEnabled = enabled;
+  mockImageBitmapWidth = width;
+  mockImageBitmapHeight = height;
+}
+
+async function mockCreateImageBitmap(
+  _blob: Blob,
+  options?: ImageBitmapOptions,
+): Promise<MockImageBitmap> {
+  if (!mockImageBitmapEnabled) {
+    throw new Error("createImageBitmap disabled in mock");
+  }
+  const w = options?.resizeWidth ?? mockImageBitmapWidth;
+  const h = options?.resizeHeight ?? mockImageBitmapHeight;
+  return {
+    width: w,
+    height: h,
+    close: vi.fn(),
+  };
+}
+
 // --- Mock Video ---
 class MockVideoElement {
   videoWidth = 1920;
@@ -92,14 +145,25 @@ class MockVideoElement {
   playsInline = false;
   error: MediaError | null = null;
   style = { display: "" } as unknown as CSSStyleDeclaration;
+  requestVideoFrameCallback: ((cb: () => void) => number) | undefined = undefined;
   private _src = "";
   private _currentTime = 0;
   private listeners = new Map<string, Set<EventListener>>();
 
+  constructor() {
+    if (mockVideoHasRequestFrameCallback) {
+      this.requestVideoFrameCallback = (cb: () => void): number => {
+        // Simulate async frame callback
+        setTimeout(() => cb(), 0);
+        return 1;
+      };
+    }
+  }
+
   set src(value: string) {
     this._src = value;
     setTimeout(() => {
-      if (mockVideoShouldError) {
+      if (mockMediaShouldError) {
         this.error = { message: "mock decode error", code: 4 } as MediaError;
         this._fire("error", new Event("error"));
       } else {
@@ -115,7 +179,7 @@ class MockVideoElement {
 
   set currentTime(value: number) {
     this._currentTime = value;
-    if (value > 0) {
+    if (value > 0 && !mockVideoSeekNeverCompletes) {
       // Simulate async seek completion
       setTimeout(() => this._fire("seeked", new Event("seeked")), 0);
     }
@@ -148,9 +212,15 @@ class MockVideoElement {
 beforeEach(() => {
   objectUrlCounter = 0;
   objectUrlMap.clear();
-  mockVideoShouldError = false;
+  mockMediaShouldError = false;
+  mockVideoSeekNeverCompletes = false;
+  mockVideoHasRequestFrameCallback = false;
+  mockImageBitmapEnabled = true;
+  mockImageBitmapWidth = 800;
+  mockImageBitmapHeight = 600;
 
   vi.stubGlobal("Image", MockImage);
+  vi.stubGlobal("createImageBitmap", mockCreateImageBitmap);
 
   const originalCreateElement = document.createElement.bind(document);
   vi.spyOn(document, "createElement").mockImplementation(((
@@ -171,4 +241,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-export { MockImage, MockVideoElement, createMockCanvas, objectUrlMap };
+export {
+  MockImage,
+  MockVideoElement,
+  createMockCanvas,
+  objectUrlMap,
+};

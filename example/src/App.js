@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import generateMediaThumbnail, {
   supportedMimeTypes,
 } from "browser-thumbnail-generator";
@@ -15,8 +15,10 @@ const App = () => {
     width: 200,
     timestamp: 0,
     aspectRatio: true,
+    crop: false,
     outputFormat: "image/jpeg",
     quality: 0.92,
+    backgroundColor: "",
   });
 
   const abortControllerRef = useRef(null);
@@ -32,11 +34,13 @@ const App = () => {
     setConfig((prev) => ({
       ...prev,
       [name]:
-        name === "aspectRatio"
+        name === "aspectRatio" || name === "crop"
           ? value === "yes"
-          : name === "outputFormat"
+          : name === "outputFormat" || name === "backgroundColor"
             ? value
-            : Number(value),
+            : value === ""
+              ? 0
+              : Number(value),
     }));
   };
 
@@ -45,6 +49,18 @@ const App = () => {
       abortControllerRef.current.abort();
     }
   };
+
+  const thumbnailUrlRef = useRef(null);
+
+  const setThumbnailUrl = useCallback((blob) => {
+    // Revoke the previous thumbnail URL to prevent memory leaks
+    if (thumbnailUrlRef.current) {
+      URL.revokeObjectURL(thumbnailUrlRef.current);
+    }
+    const url = URL.createObjectURL(blob);
+    thumbnailUrlRef.current = url;
+    setThumbnail(url);
+  }, []);
 
   useEffect(() => {
     if (!file) return;
@@ -70,12 +86,14 @@ const App = () => {
           width: config.width,
           timestamp: config.timestamp,
           maintainAspectRatio: config.aspectRatio,
+          crop: config.crop,
           outputFormat: config.outputFormat,
           quality: config.quality,
+          backgroundColor: config.backgroundColor || undefined,
           signal: controller.signal,
         });
         const { thumbnail: thumbBlob, ...rest } = res;
-        setThumbnail(URL.createObjectURL(thumbBlob));
+        setThumbnailUrl(thumbBlob);
         setThumbnailData(rest);
       } catch (err) {
         if (err.name === "AbortError") {
@@ -93,7 +111,16 @@ const App = () => {
     return () => {
       controller.abort();
     };
-  }, [config, file]);
+  }, [config, file, setThumbnailUrl]);
+
+  // Cleanup thumbnail URL on unmount
+  useEffect(() => {
+    return () => {
+      if (thumbnailUrlRef.current) {
+        URL.revokeObjectURL(thumbnailUrlRef.current);
+      }
+    };
+  }, []);
 
   const convertBytes = (bytes) => {
     if (!bytes && bytes !== 0) return "n/a";
@@ -190,6 +217,29 @@ const App = () => {
               min={0}
               max={1}
               step={0.05}
+            />
+          </div>
+          <div className="col-lg-3 mb-2">
+            <label className="form-label">Crop:</label>
+            <select
+              name="crop"
+              className="form-control"
+              value={config.crop ? "yes" : "no"}
+              onChange={handleConfigChange}
+            >
+              <option value="no">No (letterbox)</option>
+              <option value="yes">Yes (center-crop)</option>
+            </select>
+          </div>
+          <div className="col-lg-3 mb-2">
+            <label className="form-label">Background:</label>
+            <input
+              type="text"
+              name="backgroundColor"
+              className="form-control"
+              value={config.backgroundColor}
+              onChange={handleConfigChange}
+              placeholder="#ffffff"
             />
           </div>
           <div className="col-lg-6 mb-2">

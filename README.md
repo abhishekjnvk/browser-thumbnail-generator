@@ -1,7 +1,6 @@
 [![npm](https://img.shields.io/npm/v/browser-thumbnail-generator.svg)](https://www.npmjs.com/package/browser-thumbnail-generator)
 [![npm](https://img.shields.io/npm/l/browser-thumbnail-generator.svg)](https://github.com/abhishekjnvk/browser-thumbnail-generator)
 [![TypeScript](https://img.shields.io/badge/TypeScript-ready-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-43%20passing-brightgreen.svg)]()
 
 # browser-thumbnail-generator
 
@@ -15,10 +14,15 @@ A simple and efficient library for generating thumbnails from images and videos 
 
 ## Features
 
-- Generate thumbnails from images (JPEG, PNG, GIF, BMP, WebP, SVG)
-- Generate thumbnails from videos (MP4, WebM, OGG, MOV, AVI, and more)
-- Maintain or override aspect ratio
+- Generate thumbnails from images (JPEG, PNG, GIF, BMP, WebP, AVIF, SVG, HEIC)
+- Generate thumbnails from videos (MP4, WebM, OGG, MOV, AVI, MKV, and more)
+- Maintain aspect ratio (letterbox) or center-crop to fill
+- `maxWidth` / `maxHeight` constraints (scale down only, never upscale)
 - Choose output format (JPEG, PNG, WebP) and quality
+- EXIF orientation support — phone photos are automatically rotated correctly
+- `createImageBitmap` fast path for faster image resizing
+- `backgroundColor` option to fill transparent areas (useful for JPEG)
+- `maxFileSize` guard to reject oversized files before processing
 - Cancel operations with `AbortSignal`
 - Full TypeScript support with type definitions
 - Tree-shakeable ESM and CJS builds
@@ -60,17 +64,52 @@ const thumbnailUrl = URL.createObjectURL(result.thumbnail);
 import generateMediaThumbnail, { type ThumbnailOptions } from "browser-thumbnail-generator";
 
 const options: ThumbnailOptions = {
-  file: videoFile,           // File | Blob (required)
-  width: 320,                // number — desired thumbnail width (optional)
-  height: 240,               // number — desired thumbnail height (optional)
-  maintainAspectRatio: true, // boolean — keep original aspect ratio (default: true)
-  timestamp: 5,              // number — video seek time in seconds (default: 0, video only)
-  outputFormat: "image/webp",// "image/jpeg" | "image/png" | "image/webp" (default: "image/jpeg")
-  quality: 0.8,              // number — 0 to 1, for lossy formats (optional)
-  signal: abortController.signal, // AbortSignal — cancel the operation (optional)
+  // --- Required ---
+  file: videoFile,             // File | Blob
+
+  // --- Sizing ---
+  width: 320,                  // Desired thumbnail width (optional)
+  height: 240,                 // Desired thumbnail height (optional)
+  maxWidth: 1920,              // Scale down to fit max width, never upscale (optional)
+  maxHeight: 1080,             // Scale down to fit max height, never upscale (optional)
+  maintainAspectRatio: true,   // Letterbox within target box (default: true)
+  crop: false,                 // Center-crop to fill target box (default: false)
+
+  // --- Appearance ---
+  backgroundColor: "#ffffff",  // Fill canvas background before drawing (optional)
+  outputFormat: "image/webp",  // "image/jpeg" | "image/png" | "image/webp" (default: "image/jpeg")
+  quality: 0.8,                // 0–1 for lossy formats (optional)
+
+  // --- Video ---
+  timestamp: 5,                // Seek time in seconds (default: 0, video only)
+
+  // --- Safety ---
+  signal: abortController.signal,  // AbortSignal to cancel (optional)
+  maxFileSize: 50 * 1024 * 1024,   // Reject files larger than 50MB (optional)
 };
 
 const result = await generateMediaThumbnail(options);
+```
+
+### Crop mode vs. letterbox
+
+```ts
+// Letterbox: maintain aspect ratio, empty areas are transparent (or filled with backgroundColor)
+await generateMediaThumbnail({ file, width: 400, height: 400, maintainAspectRatio: true });
+// Result: 400×300 thumbnail centered in a 400×400 canvas
+
+// Crop: center-crop the source to fill the target exactly
+await generateMediaThumbnail({ file, width: 400, height: 400, crop: true });
+// Result: 400×400 thumbnail, edges cropped
+```
+
+### maxWidth / maxHeight
+
+```ts
+// Scale down to fit within 800×600, never upscale
+await generateMediaThumbnail({ file, maxWidth: 800, maxHeight: 600 });
+// A 1920×1080 video → 800×450 thumbnail
+// A 400×300 image → 400×300 (unchanged, no upscaling)
 ```
 
 ### Cancelling a request
@@ -119,11 +158,16 @@ Returns `Promise<ThumbnailResult>`.
 | `file` | `File \| Blob` | **required** | The image or video file |
 | `width` | `number` | original width | Desired thumbnail width in pixels |
 | `height` | `number` | original height | Desired thumbnail height in pixels |
-| `maintainAspectRatio` | `boolean` | `true` | Maintain the original aspect ratio when resizing |
+| `maxWidth` | `number` | no limit | Scale down to fit, never upscale |
+| `maxHeight` | `number` | no limit | Scale down to fit, never upscale |
+| `maintainAspectRatio` | `boolean` | `true` | Letterbox within target box |
+| `crop` | `boolean` | `false` | Center-crop to fill target box |
+| `backgroundColor` | `string` | transparent | CSS color to fill canvas background |
 | `timestamp` | `number` | `0` | Video seek time in seconds (video only) |
 | `outputFormat` | `"image/jpeg" \| "image/png" \| "image/webp"` | `"image/jpeg"` | Output image format |
 | `quality` | `number` | browser default | Output quality for lossy formats (0–1) |
 | `signal` | `AbortSignal` | — | Cancel the operation |
+| `maxFileSize` | `number` | no limit | Reject files larger than this (bytes) |
 
 #### Result
 
@@ -159,7 +203,21 @@ import type { ThumbnailOptions, ThumbnailResult, OutputFormat } from "browser-th
 
 ## Browser Support
 
-Requires a browser with Canvas and `URL.createObjectURL` support. `requestVideoFrameCallback` is used when available for more reliable video frame capture (Chrome 83+, Edge 83+).
+Requires a browser with Canvas and `URL.createObjectURL` support.
+
+| Feature | Minimum Browser Version |
+|---|---|
+| Core functionality | All modern browsers |
+| `requestVideoFrameCallback` (precise video frames) | Chrome 83+, Edge 83+ |
+| `createImageBitmap` fast path | Chrome 50+, Firefox 42+, Safari 15+ |
+| AVIF image support | Chrome 85+, Firefox 93+, Safari 16+ |
+| `AbortSignal` | Chrome 66+, Firefox 57+, Safari 12.1+ |
+
+## Performance
+
+- **Images**: Uses `createImageBitmap` with hardware-accelerated resize when available (no crop/EXIF/background needed). Falls back to `Image` + Canvas for complex cases.
+- **Videos**: Uses `requestVideoFrameCallback` for precise frame capture in supported browsers.
+- **EXIF**: Orientation is read from the first 128KB of the file — negligible overhead.
 
 ## Development
 
@@ -170,17 +228,23 @@ npm install
 # Build (ESM + CJS + type definitions)
 npm run build
 
-# Run tests
+# Run tests (86 tests)
 npm test
 
 # Run tests in watch mode
 npm run test:watch
+
+# Test coverage
+npm run test:coverage
 
 # Lint
 npm run lint
 
 # Type check
 npm run typecheck
+
+# Format
+npm run format
 ```
 
 ## Contributing

@@ -1,53 +1,33 @@
-import { canvasToThumbnail, getAspectHeightWidth } from "./utils.js";
-import type { OutputFormat, ThumbnailResult } from "./types.js";
+import {
+  canvasToThumbnail,
+  fillBackground,
+  resolveDimensions,
+} from "./utils.js";
+import type { ThumbnailOptions, ThumbnailResult } from "./types.js";
 
-interface VideoThumbnailOptions {
-  file: File | Blob;
-  width?: number;
-  height?: number;
-  timestamp?: number;
-  maintainAspectRatio?: boolean;
-  outputFormat?: OutputFormat;
-  quality?: number;
-  signal?: AbortSignal;
-}
+type VideoThumbnailOptions = Pick<
+  ThumbnailOptions,
+  | "file"
+  | "width"
+  | "height"
+  | "maxWidth"
+  | "maxHeight"
+  | "timestamp"
+  | "maintainAspectRatio"
+  | "crop"
+  | "backgroundColor"
+  | "outputFormat"
+  | "quality"
+  | "signal"
+>;
 
 /** HTMLVideoElement cast to include requestVideoFrameCallback (not in all TS lib versions). */
 type VideoElementWithFrameCallback = HTMLVideoElement & {
   requestVideoFrameCallback?: (callback: () => void) => number;
 };
 
-function renderVideoOnCanvas(
-  video: HTMLVideoElement,
-  width: number,
-  height: number,
-  maintainAspectRatio: boolean,
-): HTMLCanvasElement {
-  let canvasWidth = width > 0 ? width : video.videoWidth;
-  let canvasHeight = height > 0 ? height : video.videoHeight;
-
-  if (maintainAspectRatio && canvasWidth > 0 && canvasHeight > 0) {
-    const adjusted = getAspectHeightWidth(
-      canvasWidth,
-      canvasHeight,
-      video.videoWidth,
-      video.videoHeight,
-    );
-    canvasWidth = adjusted.width;
-    canvasHeight = adjusted.height;
-  }
-
-  const canvas = document.createElement("canvas");
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    throw new Error("Failed to get 2D canvas context");
-  }
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  return canvas;
-}
+/** Timeout for video seek operations (ms). Prevents hanging on stuck seeks. */
+const SEEK_TIMEOUT_MS = 10_000;
 
 export function generateVideoThumbnail(
   options: VideoThumbnailOptions,
@@ -56,8 +36,12 @@ export function generateVideoThumbnail(
     file,
     width = 0,
     height = 0,
+    maxWidth = 0,
+    maxHeight = 0,
     timestamp = 0,
     maintainAspectRatio = true,
+    crop = false,
+    backgroundColor,
     outputFormat = "image/jpeg",
     quality,
     signal,
@@ -77,10 +61,14 @@ export function generateVideoThumbnail(
     video.playsInline = true;
 
     let settled = false;
+    let seekTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const cleanup = (): void => {
       if (signal) {
         signal.removeEventListener("abort", onAbort);
+      }
+      if (seekTimeoutId !== undefined) {
+        clearTimeout(seekTimeoutId);
       }
       URL.revokeObjectURL(objectUrl);
       video.removeAttribute("src");
@@ -110,23 +98,73 @@ export function generateVideoThumbnail(
     }
 
     const captureFrame = (): void => {
+      if (settled) return;
       try {
-        const canvas = renderVideoOnCanvas(video, width, height, maintainAspectRatio);
-        const thumbWidth = canvas.width;
-        const thumbHeight = canvas.height;
+        const srcW = video.videoWidth;
+        const srcH = video.videoHeight;
+
+        if (srcW <= 0 || srcH <= 0) {
+          fail(new Error("Video has no valid dimensions. The file may be corrupted."));
+          return;
+        }
+
+        const dims = resolveDimensions({
+          width,
+          height,
+          maxWidth,
+          maxHeight,
+          maintainAspectRatio,
+          crop,
+          sourceWidth: srcW,
+          sourceHeight: srcH,
+        });
+
+        if (dims.width <= 0 || dims.height <= 0) {
+          fail(new Error("Resolved thumbnail dimensions are zero."));
+          return;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = dims.width;
+        canvas.height = dims.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          fail(new Error("Failed to get 2D canvas context"));
+          return;
+        }
+
+        if (backgroundColor) {
+          fillBackground(ctx, canvas, backgroundColor);
+        }
+
+        if (crop) {
+          ctx.drawImage(
+            video,
+            dims.sx,
+            dims.sy,
+            dims.sw,
+            dims.sh,
+            0,
+            0,
+            dims.width,
+            dims.height,
+          );
+        } else {
+          ctx.drawImage(video, 0, 0, dims.width, dims.height);
+        }
 
         canvasToThumbnail(canvas, outputFormat, quality)
           .then((blob) => {
             succeed({
               thumbnail: blob,
               size: blob.size,
-              width: thumbWidth,
-              height: thumbHeight,
+              width: dims.width,
+              height: dims.height,
               timestamp: Number(video.currentTime.toFixed(2)),
               original_size: file.size,
               total_duration: Number(video.duration?.toFixed(2) || 0),
-              original_width: video.videoWidth,
-              original_height: video.videoHeight,
+              original_width: srcW,
+              original_height: srcH,
             });
           })
           .catch(fail);
@@ -155,13 +193,21 @@ export function generateVideoThumbnail(
       const seekTime = Math.min(Math.max(Number(timestamp) || 0, 0), video.duration || 0);
 
       if (seekTime > 0) {
-        // Need to seek — capture after the seek completes
+        // Need to seek — set a timeout in case seeked never fires
+        seekTimeoutId = setTimeout(() => {
+          // Seek timed out — try capturing the current frame anyway
+          captureWhenReady();
+        }, SEEK_TIMEOUT_MS);
         video.currentTime = seekTime;
       }
       // If seekTime is 0, loadeddata handler will capture the first frame
     });
 
     video.addEventListener("seeked", () => {
+      if (seekTimeoutId !== undefined) {
+        clearTimeout(seekTimeoutId);
+        seekTimeoutId = undefined;
+      }
       captureWhenReady();
     });
 

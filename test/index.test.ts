@@ -51,7 +51,7 @@ describe("generateMediaThumbnail — input validation", () => {
   });
 
   it("should throw TypeError for negative height", async () => {
-    const file = createFile("image/png");
+    const file = createImageFile("image/png");
     await expect(
       generateMediaThumbnail({ file, height: -50 }),
     ).rejects.toThrow("`height` must be a non-negative finite number");
@@ -73,7 +73,62 @@ describe("generateMediaThumbnail — input validation", () => {
       generateMediaThumbnail({ file, quality: -0.1 }),
     ).rejects.toThrow("`quality` must be a number between 0 and 1");
   });
+
+  it("should throw TypeError for negative maxWidth", async () => {
+    const file = createFile("image/png");
+    await expect(
+      generateMediaThumbnail({ file, maxWidth: -100 }),
+    ).rejects.toThrow("`maxWidth` must be a non-negative finite number");
+  });
+
+  it("should throw TypeError for negative maxHeight", async () => {
+    const file = createFile("image/png");
+    await expect(
+      generateMediaThumbnail({ file, maxHeight: -50 }),
+    ).rejects.toThrow("`maxHeight` must be a non-negative finite number");
+  });
+
+  it("should throw TypeError for invalid outputFormat", async () => {
+    const file = createFile("image/png");
+    await expect(
+      // @ts-expect-error testing runtime validation
+      generateMediaThumbnail({ file, outputFormat: "image/gif" }),
+    ).rejects.toThrow("`outputFormat` must be one of");
+  });
+
+  it("should throw TypeError for non-boolean maintainAspectRatio", async () => {
+    const file = createFile("image/png");
+    await expect(
+      // @ts-expect-error testing runtime validation
+      generateMediaThumbnail({ file, maintainAspectRatio: "yes" }),
+    ).rejects.toThrow("`maintainAspectRatio` must be a boolean");
+  });
+
+  it("should throw TypeError for non-boolean crop", async () => {
+    const file = createFile("image/png");
+    await expect(
+      // @ts-expect-error testing runtime validation
+      generateMediaThumbnail({ file, crop: "yes" }),
+    ).rejects.toThrow("`crop` must be a boolean");
+  });
+
+  it("should throw Error when file exceeds maxFileSize", async () => {
+    const file = createFile("image/png", 2048);
+    await expect(
+      generateMediaThumbnail({ file, maxFileSize: 1024 }),
+    ).rejects.toThrow("exceeds the maximum allowed size");
+  });
+
+  it("should accept file within maxFileSize limit", async () => {
+    const file = createFile("image/png", 512);
+    const result = await generateMediaThumbnail({ file, maxFileSize: 1024 });
+    expect(result.thumbnail).toBeInstanceOf(Blob);
+  });
 });
+
+function createImageFile(type = "image/png", size = 1024): File {
+  return createFile(type, size);
+}
 
 describe("generateMediaThumbnail — routing", () => {
   it("should route image files to image thumbnail generator", async () => {
@@ -107,6 +162,35 @@ describe("generateMediaThumbnail — routing", () => {
       expect(result.thumbnail).toBeInstanceOf(Blob);
     }
   });
+
+  it("should support maxWidth option end-to-end", async () => {
+    const file = createFile("image/png");
+    const result = await generateMediaThumbnail({ file, maxWidth: 400 });
+    expect(result.width).toBe(400);
+    expect(result.height).toBe(300);
+  });
+
+  it("should support crop option end-to-end", async () => {
+    const file = createFile("image/png");
+    const result = await generateMediaThumbnail({
+      file,
+      width: 300,
+      height: 300,
+      crop: true,
+    });
+    expect(result.width).toBe(300);
+    expect(result.height).toBe(300);
+  });
+
+  it("should support backgroundColor option end-to-end", async () => {
+    const file = createFile("image/png");
+    const result = await generateMediaThumbnail({
+      file,
+      backgroundColor: "#ff0000",
+      outputFormat: "image/jpeg",
+    });
+    expect(result.thumbnail.type).toBe("image/jpeg");
+  });
 });
 
 describe("supportedMimeTypes export", () => {
@@ -120,7 +204,10 @@ describe("supportedMimeTypes export", () => {
   it("should include common formats", () => {
     expect(supportedMimeTypes).toContain("image/jpeg");
     expect(supportedMimeTypes).toContain("image/png");
+    expect(supportedMimeTypes).toContain("image/webp");
+    expect(supportedMimeTypes).toContain("image/avif");
     expect(supportedMimeTypes).toContain("video/mp4");
     expect(supportedMimeTypes).toContain("video/webm");
+    expect(supportedMimeTypes).toContain("video/x-matroska");
   });
 });

@@ -23,6 +23,8 @@ export default tseslint.config(
         Event: "readonly",
         EventListener: "readonly",
         setTimeout: "readonly",
+        clearTimeout: "readonly",
+        createImageBitmap: "readonly",
         console: "readonly",
       },
     },
