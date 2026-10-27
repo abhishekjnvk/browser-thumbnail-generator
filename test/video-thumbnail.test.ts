@@ -7,11 +7,7 @@ import {
   setMockVideoSeekNeverCompletes,
 } from "./setup.js";
 
-function createVideoFile(
-  type = "video/mp4",
-  size = 10240,
-  name = "test.mp4",
-): File {
+function createVideoFile(type = "video/mp4", size = 10240, name = "test.mp4"): File {
   const content = new Uint8Array(size);
   return new File([content], name, { type });
 }
@@ -98,9 +94,7 @@ describe("generateVideoThumbnail", () => {
     setMockMediaError(true);
     const file = createVideoFile();
 
-    await expect(generateVideoThumbnail({ file })).rejects.toThrow(
-      "Failed to load video",
-    );
+    await expect(generateVideoThumbnail({ file })).rejects.toThrow("Failed to load video");
   });
 
   it("should support AbortSignal — already aborted", async () => {
@@ -108,9 +102,9 @@ describe("generateVideoThumbnail", () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect(
-      generateVideoThumbnail({ file, signal: controller.signal }),
-    ).rejects.toThrow("aborted");
+    await expect(generateVideoThumbnail({ file, signal: controller.signal })).rejects.toThrow(
+      "aborted",
+    );
   });
 
   it("should revoke object URL after success", async () => {

@@ -9,11 +9,7 @@ export { supportedMimeTypes, supportedImageMimes, supportedVideoMimes } from "./
 const imageMimeSet = new Set(supportedImageMimes);
 const videoMimeSet = new Set(supportedVideoMimes);
 
-const validOutputFormats: ReadonlySet<string> = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-]);
+const validOutputFormats: ReadonlySet<string> = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 /**
  * Generate a thumbnail from an image or video file.
@@ -26,9 +22,7 @@ const validOutputFormats: ReadonlySet<string> = new Set([
  * @throws {TypeError} If input validation fails
  * @throws {Error} If the file type is not supported or processing fails
  */
-export async function generateMediaThumbnail(
-  options: ThumbnailOptions,
-): Promise<ThumbnailResult> {
+export async function generateMediaThumbnail(options: ThumbnailOptions): Promise<ThumbnailResult> {
   // --- Input validation ---
   if (!options || typeof options !== "object") {
     throw new TypeError("Options object is required.");
@@ -41,9 +35,7 @@ export async function generateMediaThumbnail(
   }
 
   if (!(file instanceof Blob)) {
-    throw new TypeError(
-      "`file` must be a File or Blob instance. Received: " + typeof file,
-    );
+    throw new TypeError("`file` must be a File or Blob instance. Received: " + typeof file);
   }
 
   const fileType = file.type;
@@ -58,7 +50,10 @@ export async function generateMediaThumbnail(
   const { width, height, maxWidth, maxHeight, timestamp, quality, maxFileSize } = options;
 
   const validateNonNegativeNumber = (name: string, value: unknown): void => {
-    if (value !== undefined && (typeof value !== "number" || value < 0 || !Number.isFinite(value))) {
+    if (
+      value !== undefined &&
+      (typeof value !== "number" || value < 0 || !Number.isFinite(value))
+    ) {
       throw new TypeError(`\`${name}\` must be a non-negative finite number.`);
     }
   };
@@ -108,8 +103,7 @@ export async function generateMediaThumbnail(
   }
 
   throw new Error(
-    `Unsupported file type: "${fileType}". ` +
-      `Supported types: ${supportedMimeTypes.join(", ")}`,
+    `Unsupported file type: "${fileType}". ` + `Supported types: ${supportedMimeTypes.join(", ")}`,
   );
 }
 

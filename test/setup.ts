@@ -57,15 +57,13 @@ function createMockCanvas(): HTMLCanvasElement {
       if (contextId === "2d") return ctx;
       return null;
     }),
-    toBlob: vi.fn(
-      (callback: BlobCallback, type?: string, _quality?: number) => {
-        const mimeType = type || "image/png";
-        const blob = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], {
-          type: mimeType,
-        });
-        setTimeout(() => callback(blob), 0);
-      },
-    ),
+    toBlob: vi.fn((callback: BlobCallback, type?: string, _quality?: number) => {
+      const mimeType = type || "image/png";
+      const blob = new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], {
+        type: mimeType,
+      });
+      setTimeout(() => callback(blob), 0);
+    }),
     toDataURL: vi.fn(() => "data:image/png;base64,mock"),
   } as unknown as HTMLCanvasElement;
 
@@ -109,11 +107,7 @@ let mockImageBitmapEnabled = true;
 let mockImageBitmapWidth = 800;
 let mockImageBitmapHeight = 600;
 
-export function setMockImageBitmap(
-  enabled: boolean,
-  width = 800,
-  height = 600,
-): void {
+export function setMockImageBitmap(enabled: boolean, width = 800, height = 600): void {
   mockImageBitmapEnabled = enabled;
   mockImageBitmapWidth = width;
   mockImageBitmapHeight = height;
@@ -223,9 +217,7 @@ beforeEach(() => {
   vi.stubGlobal("createImageBitmap", mockCreateImageBitmap);
 
   const originalCreateElement = document.createElement.bind(document);
-  vi.spyOn(document, "createElement").mockImplementation(((
-    tagName: string,
-  ): HTMLElement => {
+  vi.spyOn(document, "createElement").mockImplementation(((tagName: string): HTMLElement => {
     if (tagName === "canvas") {
       return createMockCanvas() as unknown as HTMLElement;
     }
@@ -241,9 +233,4 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-export {
-  MockImage,
-  MockVideoElement,
-  createMockCanvas,
-  objectUrlMap,
-};
+export { MockImage, MockVideoElement, createMockCanvas, objectUrlMap };

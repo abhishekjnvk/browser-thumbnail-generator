@@ -7,9 +7,7 @@ const { mockReadExifOrientation } = vi.hoisted(() => ({
 
 // Mock only readExifOrientation; keep getOrientationTransform real
 vi.mock("../src/exif.js", async () => {
-  const actual = await vi.importActual<typeof import("../src/exif.js")>(
-    "../src/exif.js",
-  );
+  const actual = await vi.importActual<typeof import("../src/exif.js")>("../src/exif.js");
   return {
     ...actual,
     readExifOrientation: mockReadExifOrientation,
@@ -19,11 +17,7 @@ vi.mock("../src/exif.js", async () => {
 import { generateImageThumbnail } from "../src/image-thumbnail.js";
 import { setMockImageBitmap } from "./setup.js";
 
-function createImageFile(
-  type = "image/jpeg",
-  size = 1024,
-  name = "test.jpg",
-): File {
+function createImageFile(type = "image/jpeg", size = 1024, name = "test.jpg"): File {
   const content = new Uint8Array(size);
   return new File([content], name, { type });
 }

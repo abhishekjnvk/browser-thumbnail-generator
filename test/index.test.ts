@@ -45,47 +45,47 @@ describe("generateMediaThumbnail — input validation", () => {
 
   it("should throw TypeError for negative width", async () => {
     const file = createFile("image/png");
-    await expect(
-      generateMediaThumbnail({ file, width: -100 }),
-    ).rejects.toThrow("`width` must be a non-negative finite number");
+    await expect(generateMediaThumbnail({ file, width: -100 })).rejects.toThrow(
+      "`width` must be a non-negative finite number",
+    );
   });
 
   it("should throw TypeError for negative height", async () => {
     const file = createImageFile("image/png");
-    await expect(
-      generateMediaThumbnail({ file, height: -50 }),
-    ).rejects.toThrow("`height` must be a non-negative finite number");
+    await expect(generateMediaThumbnail({ file, height: -50 })).rejects.toThrow(
+      "`height` must be a non-negative finite number",
+    );
   });
 
   it("should throw TypeError for negative timestamp", async () => {
     const file = createFile("video/mp4");
-    await expect(
-      generateMediaThumbnail({ file, timestamp: -1 }),
-    ).rejects.toThrow("`timestamp` must be a non-negative finite number");
+    await expect(generateMediaThumbnail({ file, timestamp: -1 })).rejects.toThrow(
+      "`timestamp` must be a non-negative finite number",
+    );
   });
 
   it("should throw TypeError for quality out of range", async () => {
     const file = createFile("image/png");
-    await expect(
-      generateMediaThumbnail({ file, quality: 1.5 }),
-    ).rejects.toThrow("`quality` must be a number between 0 and 1");
-    await expect(
-      generateMediaThumbnail({ file, quality: -0.1 }),
-    ).rejects.toThrow("`quality` must be a number between 0 and 1");
+    await expect(generateMediaThumbnail({ file, quality: 1.5 })).rejects.toThrow(
+      "`quality` must be a number between 0 and 1",
+    );
+    await expect(generateMediaThumbnail({ file, quality: -0.1 })).rejects.toThrow(
+      "`quality` must be a number between 0 and 1",
+    );
   });
 
   it("should throw TypeError for negative maxWidth", async () => {
     const file = createFile("image/png");
-    await expect(
-      generateMediaThumbnail({ file, maxWidth: -100 }),
-    ).rejects.toThrow("`maxWidth` must be a non-negative finite number");
+    await expect(generateMediaThumbnail({ file, maxWidth: -100 })).rejects.toThrow(
+      "`maxWidth` must be a non-negative finite number",
+    );
   });
 
   it("should throw TypeError for negative maxHeight", async () => {
     const file = createFile("image/png");
-    await expect(
-      generateMediaThumbnail({ file, maxHeight: -50 }),
-    ).rejects.toThrow("`maxHeight` must be a non-negative finite number");
+    await expect(generateMediaThumbnail({ file, maxHeight: -50 })).rejects.toThrow(
+      "`maxHeight` must be a non-negative finite number",
+    );
   });
 
   it("should throw TypeError for invalid outputFormat", async () => {
@@ -114,9 +114,9 @@ describe("generateMediaThumbnail — input validation", () => {
 
   it("should throw Error when file exceeds maxFileSize", async () => {
     const file = createFile("image/png", 2048);
-    await expect(
-      generateMediaThumbnail({ file, maxFileSize: 1024 }),
-    ).rejects.toThrow("exceeds the maximum allowed size");
+    await expect(generateMediaThumbnail({ file, maxFileSize: 1024 })).rejects.toThrow(
+      "exceeds the maximum allowed size",
+    );
   });
 
   it("should accept file within maxFileSize limit", async () => {
@@ -195,10 +195,7 @@ describe("generateMediaThumbnail — routing", () => {
 
 describe("supportedMimeTypes export", () => {
   it("should include all image and video MIME types", () => {
-    expect(supportedMimeTypes).toEqual([
-      ...supportedImageMimes,
-      ...supportedVideoMimes,
-    ]);
+    expect(supportedMimeTypes).toEqual([...supportedImageMimes, ...supportedVideoMimes]);
   });
 
   it("should include common formats", () => {

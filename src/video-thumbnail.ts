@@ -1,8 +1,4 @@
-import {
-  canvasToThumbnail,
-  fillBackground,
-  resolveDimensions,
-} from "./utils.js";
+import { canvasToThumbnail, fillBackground, resolveDimensions } from "./utils.js";
 import type { ThumbnailOptions, ThumbnailResult } from "./types.js";
 
 type VideoThumbnailOptions = Pick<
@@ -29,9 +25,7 @@ type VideoElementWithFrameCallback = HTMLVideoElement & {
 /** Timeout for video seek operations (ms). Prevents hanging on stuck seeks. */
 const SEEK_TIMEOUT_MS = 10_000;
 
-export function generateVideoThumbnail(
-  options: VideoThumbnailOptions,
-): Promise<ThumbnailResult> {
+export function generateVideoThumbnail(options: VideoThumbnailOptions): Promise<ThumbnailResult> {
   const {
     file,
     width = 0,
@@ -138,17 +132,7 @@ export function generateVideoThumbnail(
         }
 
         if (crop) {
-          ctx.drawImage(
-            video,
-            dims.sx,
-            dims.sy,
-            dims.sw,
-            dims.sh,
-            0,
-            0,
-            dims.width,
-            dims.height,
-          );
+          ctx.drawImage(video, dims.sx, dims.sy, dims.sw, dims.sh, 0, 0, dims.width, dims.height);
         } else {
           ctx.drawImage(video, 0, 0, dims.width, dims.height);
         }

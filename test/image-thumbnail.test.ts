@@ -2,11 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { generateImageThumbnail } from "../src/image-thumbnail.js";
 import { MockImage, objectUrlMap, setMockMediaError, setMockImageBitmap } from "./setup.js";
 
-function createImageFile(
-  type = "image/png",
-  size = 1024,
-  name = "test.png",
-): File {
+function createImageFile(type = "image/png", size = 1024, name = "test.png"): File {
   const content = new Uint8Array(size);
   return new File([content], name, { type });
 }
@@ -69,9 +65,7 @@ describe("generateImageThumbnail", () => {
   it("should reject when image fails to load", async () => {
     setMockMediaError(true);
     const file = createImageFile();
-    await expect(generateImageThumbnail({ file })).rejects.toThrow(
-      "Failed to load image",
-    );
+    await expect(generateImageThumbnail({ file })).rejects.toThrow("Failed to load image");
   });
 
   it("should support AbortSignal — already aborted", async () => {
@@ -79,9 +73,9 @@ describe("generateImageThumbnail", () => {
     const controller = new AbortController();
     controller.abort();
 
-    await expect(
-      generateImageThumbnail({ file, signal: controller.signal }),
-    ).rejects.toThrow("aborted");
+    await expect(generateImageThumbnail({ file, signal: controller.signal })).rejects.toThrow(
+      "aborted",
+    );
   });
 
   it("should support AbortSignal — abort during load", async () => {
@@ -117,10 +111,7 @@ describe("generateImageThumbnail", () => {
     await generateImageThumbnail({ file, signal: controller.signal });
 
     expect(addSpy).toHaveBeenCalled();
-    expect(removeSpy).toHaveBeenCalledWith(
-      "abort",
-      expect.any(Function),
-    );
+    expect(removeSpy).toHaveBeenCalledWith("abort", expect.any(Function));
   });
 
   it("should revoke object URL after success", async () => {

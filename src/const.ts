@@ -25,7 +25,4 @@ export const supportedVideoMimes: string[] = [
   "video/x-matroska",
 ];
 
-export const supportedMimeTypes: string[] = [
-  ...supportedImageMimes,
-  ...supportedVideoMimes,
-];
+export const supportedMimeTypes: string[] = [...supportedImageMimes, ...supportedVideoMimes];

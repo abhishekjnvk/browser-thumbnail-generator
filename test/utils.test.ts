@@ -187,11 +187,7 @@ describe("canvasToThumbnail", () => {
 
     await canvasToThumbnail(canvas, "image/webp", 0.8);
 
-    expect(canvas.toBlob).toHaveBeenCalledWith(
-      expect.any(Function),
-      "image/webp",
-      0.8,
-    );
+    expect(canvas.toBlob).toHaveBeenCalledWith(expect.any(Function), "image/webp", 0.8);
   });
 
   it("should default to image/jpeg", async () => {
@@ -201,11 +197,7 @@ describe("canvasToThumbnail", () => {
 
     await canvasToThumbnail(canvas);
 
-    expect(canvas.toBlob).toHaveBeenCalledWith(
-      expect.any(Function),
-      "image/jpeg",
-      undefined,
-    );
+    expect(canvas.toBlob).toHaveBeenCalledWith(expect.any(Function), "image/jpeg", undefined);
   });
 
   it("should reset canvas dimensions after encoding", async () => {

@@ -1,8 +1,4 @@
-import {
-  canvasToThumbnail,
-  fillBackground,
-  resolveDimensions,
-} from "./utils.js";
+import { canvasToThumbnail, fillBackground, resolveDimensions } from "./utils.js";
 import { readExifOrientation, getOrientationTransform } from "./exif.js";
 import type { OutputFormat, ThumbnailOptions, ThumbnailResult } from "./types.js";
 
@@ -68,9 +64,7 @@ async function tryFastPath(
   }
 }
 
-export function generateImageThumbnail(
-  options: ImageThumbnailOptions,
-): Promise<ThumbnailResult> {
+export function generateImageThumbnail(options: ImageThumbnailOptions): Promise<ThumbnailResult> {
   const {
     file,
     width = 0,
@@ -248,17 +242,7 @@ export function generateImageThumbnail(
         } else if (crop) {
           // No EXIF rotation: crop directly from the image.
           // dims.sx/sy/sw/sh are in the image's natural coordinate space.
-          ctx.drawImage(
-            img,
-            dims.sx,
-            dims.sy,
-            dims.sw,
-            dims.sh,
-            0,
-            0,
-            dims.width,
-            dims.height,
-          );
+          ctx.drawImage(img, dims.sx, dims.sy, dims.sw, dims.sh, 0, 0, dims.width, dims.height);
         } else {
           // No EXIF rotation, no crop: scale directly from the image.
           ctx.drawImage(img, 0, 0, dims.width, dims.height);
@@ -282,9 +266,7 @@ export function generateImageThumbnail(
 
     img.onerror = (): void => {
       fail(
-        new Error(
-          "Failed to load image. The file may be corrupted or in an unsupported format.",
-        ),
+        new Error("Failed to load image. The file may be corrupted or in an unsupported format."),
       );
     };
 
