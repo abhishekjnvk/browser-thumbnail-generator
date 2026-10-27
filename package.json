@@ -1,13 +1,46 @@
 {
   "name": "browser-thumbnail-generator",
-  "version": "1.0.3",
+  "version": "2.0.0",
   "description": "A simple and efficient library for generating thumbnails from images and videos quickly",
-  "main": "lib/index.js",
-  "directories": {
-    "example": "example",
-    "lib": "lib"
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
-  "type": "module", 
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src test --ext .ts",
+    "lint:fix": "eslint src test --ext .ts --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build && npm run test && npm run lint"
+  },
+  "keywords": [
+    "thumbnail",
+    "video-thumbnail",
+    "image-thumbnail",
+    "browser",
+    "canvas",
+    "media"
+  ],
   "author": "Abhishek Kumar <abhishekkumarjnvk@gmail.com>",
   "contributors": [
     "Abhishek Kumar <abhishekkumarjnvk@gmail.com>"
@@ -16,14 +49,22 @@
     "type": "git",
     "url": "git+https://github.com/abhishekjnvk/browser-thumbnail-generator.git"
   },
-  "keywords": [
-    "thumbnail",
-    "video-thumbnail",
-    "image-thumbnail"
-  ],
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/abhishekjnvk/browser-thumbnail-generator/issues"
   },
-  "homepage": "https://github.com/abhishekjnvk/browser-thumbnail-generator#readme"
+  "homepage": "https://github.com/abhishekjnvk/browser-thumbnail-generator#readme",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^3.0.0",
+    "eslint": "^9.0.0",
+    "jsdom": "^25.0.0",
+    "prettier": "^3.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^3.0.0"
+  }
 }

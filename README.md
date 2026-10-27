@@ -1,113 +1,186 @@
-
 [![npm](https://img.shields.io/npm/v/browser-thumbnail-generator.svg)](https://www.npmjs.com/package/browser-thumbnail-generator)
 [![npm](https://img.shields.io/npm/l/browser-thumbnail-generator.svg)](https://github.com/abhishekjnvk/browser-thumbnail-generator)
+[![TypeScript](https://img.shields.io/badge/TypeScript-ready-blue.svg)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/tests-43%20passing-brightgreen.svg)]()
 
 # browser-thumbnail-generator
 
-`browser-thumbnail-generator` is a simple and efficient library for generating thumbnails from images and videos quickly. It is designed to be easily integrated into your projects, providing fast and reliable thumbnail generation.
+A simple and efficient library for generating thumbnails from images and videos in the browser. Zero dependencies, written in TypeScript, with full ESM/CJS support.
 
-# Demo
+## Demo
 
 [Live Preview](https://browser-thumbnail.netlify.app/)
 
-![alt text](./example/example.gif)
+![demo](./example/example.gif)
 
 ## Features
 
-- Generate thumbnails from images
-- Generate thumbnails from videos
-- Easy to use and integrate
+- Generate thumbnails from images (JPEG, PNG, GIF, BMP, WebP, SVG)
+- Generate thumbnails from videos (MP4, WebM, OGG, MOV, AVI, and more)
+- Maintain or override aspect ratio
+- Choose output format (JPEG, PNG, WebP) and quality
+- Cancel operations with `AbortSignal`
+- Full TypeScript support with type definitions
+- Tree-shakeable ESM and CJS builds
+- Comprehensive input validation
 
 ## Installation
-
-You can install browser-thumbnail-generator via:
-
-- npm
 
 ```bash
 npm install browser-thumbnail-generator
 ```
 
-- yarn
-
 ```bash
 yarn add browser-thumbnail-generator
 ```
 
-## Usages
+```bash
+pnpm add browser-thumbnail-generator
+```
 
-`generateMediaThumbnail()`
+## Usage
 
-```js
-import generateMediaThumbnail from 'browser-thumbnail-generator';
+### Basic usage
 
-let params = {
-  file: imageFile, // image/video file
+```ts
+import generateMediaThumbnail from "browser-thumbnail-generator";
+
+const result = await generateMediaThumbnail({
+  file: imageFile,       // File or Blob
   width: 200,
   height: 200,
-  maintainAspectRatio: true
-}
-
-generateMediaThumbnail({
-  file: imageFile,
-  width: 200,
-  height: 200,
-  maintainAspectRatio: true
-}).then(response => {
-  const thumbnailUrl=URL.createObjectURL(response.thumbnail)
-  
-  console.log('Image thumbnail generated successfully!', thumbnailUrl);
 });
+
+const thumbnailUrl = URL.createObjectURL(result.thumbnail);
 ```
 
-Input Parameters:
+### All options
 
 ```ts
-{
-  file: File;
-  height?: number;
-  width?: number;
-  maintainAspectRatio?: boolean;
-  timestamp?: number; // for video files
+import generateMediaThumbnail, { type ThumbnailOptions } from "browser-thumbnail-generator";
+
+const options: ThumbnailOptions = {
+  file: videoFile,           // File | Blob (required)
+  width: 320,                // number — desired thumbnail width (optional)
+  height: 240,               // number — desired thumbnail height (optional)
+  maintainAspectRatio: true, // boolean — keep original aspect ratio (default: true)
+  timestamp: 5,              // number — video seek time in seconds (default: 0, video only)
+  outputFormat: "image/webp",// "image/jpeg" | "image/png" | "image/webp" (default: "image/jpeg")
+  quality: 0.8,              // number — 0 to 1, for lossy formats (optional)
+  signal: abortController.signal, // AbortSignal — cancel the operation (optional)
+};
+
+const result = await generateMediaThumbnail(options);
+```
+
+### Cancelling a request
+
+```ts
+const controller = new AbortController();
+
+// Cancel after 2 seconds
+const timeout = setTimeout(() => controller.abort(), 2000);
+
+try {
+  const result = await generateMediaThumbnail({ file, signal: controller.signal });
+  clearTimeout(timeout);
+} catch (err) {
+  if (err.name === "AbortError") {
+    console.log("Thumbnail generation was cancelled");
+  }
 }
 ```
 
-- file (File): The image file from which to generate the thumbnail. This is required.
-- height (number, optional): The desired height of the thumbnail. If not provided, the original height of the image is used.
-- width (number, optional): The desired width of the thumbnail. If not provided, the original width of the image is used.
-- maintainAspectRatio (boolean, optional): If true, maintains the aspect ratio of the original image when resizing. Default is true.
-
-- timestamp (number, optional, `for video only`): The time point (in seconds) in the video from which to capture the thumbnail. If not provided, the default is 0 (the start of the video).
-
-Response Type:
+### Error handling
 
 ```ts
-Promise<{
-  thumbnail: Blob;
-  width: number;
-  height: number;
-  size: number;
-  original_size: number;
-  original_width: number,
-  original_height: number,
-  total_duration: number; // for video files
-}>
+import generateMediaThumbnail from "browser-thumbnail-generator";
+
+try {
+  const result = await generateMediaThumbnail({ file });
+} catch (err) {
+  // TypeError: input validation errors (missing file, invalid dimensions, etc.)
+  // Error: unsupported file type, failed to load media, encoding failure, etc.
+  // DOMException (AbortError): operation was cancelled
+  console.error(err);
+}
 ```
 
-- thumbnail (Blob): The generated thumbnail image as a Blob object.
-- width (number): The width of the generated thumbnail.
-- height (number): The height of the generated thumbnail.
-- size (number): The size (in bytes) of the generated thumbnail.
-- original_size (number): The size (in bytes) of the original image file.
+## API
 
----
+### `generateMediaThumbnail(options)`
 
-supported mime types:
+Returns `Promise<ThumbnailResult>`.
 
-supported mime types for thumbnail generation can be imported using
+#### Options
 
-```js
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `file` | `File \| Blob` | **required** | The image or video file |
+| `width` | `number` | original width | Desired thumbnail width in pixels |
+| `height` | `number` | original height | Desired thumbnail height in pixels |
+| `maintainAspectRatio` | `boolean` | `true` | Maintain the original aspect ratio when resizing |
+| `timestamp` | `number` | `0` | Video seek time in seconds (video only) |
+| `outputFormat` | `"image/jpeg" \| "image/png" \| "image/webp"` | `"image/jpeg"` | Output image format |
+| `quality` | `number` | browser default | Output quality for lossy formats (0–1) |
+| `signal` | `AbortSignal` | — | Cancel the operation |
+
+#### Result
+
+| Property | Type | Description |
+|---|---|---|
+| `thumbnail` | `Blob` | The generated thumbnail image |
+| `width` | `number` | Thumbnail width in pixels |
+| `height` | `number` | Thumbnail height in pixels |
+| `size` | `number` | Thumbnail file size in bytes |
+| `original_size` | `number` | Original file size in bytes |
+| `original_width` | `number` | Original media width in pixels |
+| `original_height` | `number` | Original media height in pixels |
+| `total_duration` | `number?` | Video duration in seconds (video only) |
+| `timestamp` | `number?` | Captured timestamp in seconds (video only) |
+
+### `supportedMimeTypes`
+
+Array of all supported MIME types for the `accept` attribute of file inputs.
+
+```ts
 import { supportedMimeTypes } from "browser-thumbnail-generator";
+
+<input type="file" accept={supportedMimeTypes.join(",")} />
+```
+
+Also available: `supportedImageMimes`, `supportedVideoMimes`.
+
+### Type exports
+
+```ts
+import type { ThumbnailOptions, ThumbnailResult, OutputFormat } from "browser-thumbnail-generator";
+```
+
+## Browser Support
+
+Requires a browser with Canvas and `URL.createObjectURL` support. `requestVideoFrameCallback` is used when available for more reliable video frame capture (Chrome 83+, Edge 83+).
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Build (ESM + CJS + type definitions)
+npm run build
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Lint
+npm run lint
+
+# Type check
+npm run typecheck
 ```
 
 ## Contributing
@@ -116,8 +189,8 @@ Contributions are welcome! Please open an issue or submit a pull request on GitH
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+[MIT](./LICENSE)
 
 ## Author
 
-[Abhishek Kumar](https://github.com/abhishekjnvk) ([Blog Site](https://codecave.abhishekjnvk.in/))
+[Abhishek Kumar](https://github.com/abhishekjnvk) ([Blog](https://codecave.abhishekjnvk.in/))
